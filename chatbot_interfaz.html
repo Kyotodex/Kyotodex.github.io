@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Interface</title>
+    <link rel="stylesheet" href="styles/C_interfaz.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <button class="settings-button" onclick="toggleSettingsMenu()">Configuraciones</button>
+    <div class="settings-menu" id="settings-menu">
+        <h2>Configuraciones</h2>
+        <label for="openai-key">OpenAI Key:</label>
+        <input type="text" id="openai-key" placeholder="Ingresa tu OpenAI Key">
+        <button onclick="saveSettings()">Guardar</button>
+    </div>
+    <div class="chat-container">
+        <!-- Información del bot -->
+        <div class="bot-info">
+            <h2 id="bot-name"></h2>
+            <p id="bot-description"></p>
+        </div>
+
+        <!-- Área del chat -->
+        <div class="chat-area">
+            <div id="chat-messages"></div>
+            <div class="chat-input">
+                <input type="text" id="user-input" placeholder="Escribe un mensaje...">
+                <button id="send-button">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cargar datos del bot
+        const urlParams = new URLSearchParams(window.location.search);
+        const botName = urlParams.get('bot');
+        
+        fetch(`/bots/${botName}.json`)
+            .then(response => response.json())
+            .then(bot => {
+                document.getElementById('bot-avatar').src = bot.photo;
+                document.getElementById('bot-name').textContent = bot.name;
+                document.getElementById('bot-description').textContent = bot.description;
+            })
+            .catch(error => console.error('Error:', error));
+
+        // Funcionalidad básica del chat
+        const sendButton = document.getElementById('send-button');
+        const userInput = document.getElementById('user-input');
+        const chatMessages = document.getElementById('chat-messages');
+
+        sendButton.addEventListener('click', () => {
+            const message = userInput.value.trim();
+            if (message) {
+                // Agregar mensaje del usuario
+                appendMessage('user', message);
+                userInput.value = '';
+                
+                // Obtener respuesta del bot usando OpenAI
+                getBotResponse(message);
+            }
+        });
+
+        function appendMessage(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function getBotResponse(message) {
+            const openaiKey = localStorage.getItem('openaiKey');
+            if (!openaiKey) {
+                appendMessage('bot', 'Por favor, configura tu OpenAI Key en las configuraciones.');
+                return;
+            }
+
+            fetch('https://api.openai.com/v1/engines/davinci-codex/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${openaiKey}`
+                },
+                body: JSON.stringify({
+                    prompt: message,
+                    max_tokens: 150
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const botResponse = data.choices[0].text.trim();
+                appendMessage('bot', botResponse);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                appendMessage('bot', 'Hubo un error al obtener la respuesta del bot.');
+            });
+        }
+
+        // Funcionalidad del menú de configuraciones
+        function toggleSettingsMenu() {
+            const settingsMenu = document.getElementById('settings-menu');
+            settingsMenu.classList.toggle('active');
+        }
+
+        function saveSettings() {
+            const openaiKey = document.getElementById('openai-key').value;
+            localStorage.setItem('openaiKey', openaiKey);
+            alert('Configuraciones guardadas');
+        }
+
+        // Cargar la key de OpenAI si está guardada
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedKey = localStorage.getItem('openaiKey');
+            if (savedKey) {
+                document.getElementById('openai-key').value = savedKey;
+            }
+        });
+    </script>
+</body>
+</html>

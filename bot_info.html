@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Información del Bot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/styles.css">
+</head>
+<body>
+    <button class="back-button" onclick="window.location.href='index.html'">Regresar</button>
+    <div class="container">
+        <div class="bot-details">
+            <img id="bot-avatar" src="" alt="Bot Avatar">
+            <h1 id="bot-name"></h1>
+            <p id="bot-description"></p>
+            <p id="bot-personality"></p>
+            <button class="boton-chat" onclick="startChat()">Iniciar Chat</button>
+        </div>
+    </div>
+    <footer>
+        <div class="Noc">
+            <p>© 2024 Nex-AI. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+    <script>
+        // Cargar datos del bot
+        const urlParams = new URLSearchParams(window.location.search);
+        const botName = urlParams.get('bot');
+        
+        fetch(`/bots/${botName}.json`)
+            .then(response => response.json())
+            .then(bot => {
+                document.getElementById('bot-avatar').src = bot.photo;
+                document.getElementById('bot-name').textContent = bot.name;
+                document.getElementById('bot-description').textContent = bot.description;
+                document.getElementById('bot-personality').textContent = `Personalidad: ${bot.personality}`;
+                document.title = `${bot.name} - Información`;
+            })
+            .catch(error => console.error('Error:', error));
+
+        function startChat() {
+            window.location.href = `chatbot_interfaz.html?bot=${botName}`;
+        }
+    </script>
+</body>
+</html>
