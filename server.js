@@ -115,7 +115,7 @@ app.listen(PORT, () => {
 });
 
 async function uploadToGitHub(filename, content) {
-    const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+    const GITHUB_TOKEN = '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';
     const REPO_OWNER = 'Kyotodex';
     const REPO_NAME = 'Kyotodex.github.io';
     const FILE_PATH = `bots/${filename}.json`;
