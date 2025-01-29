@@ -5,28 +5,62 @@ document.addEventListener('DOMContentLoaded', function() {
     const descriptionInput = document.querySelector('.D_personaje');
     const personalityInput = document.querySelector('.P_personaje');
 
-    createButton.addEventListener('click', function() {
-        const formData = new FormData();
-        formData.append('name', nameInput.value);
-        formData.append('photo', photoInput.files[0]);
-        formData.append('description', descriptionInput.value);
-        formData.append('personality', personalityInput.value);
+    const GITHUB_TOKEN = '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';
+    const REPO_OWNER = 'Kyotodex';
+    const REPO_NAME = 'Kyotodex.github.io';
 
-        fetch('/save-character', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            showPopup('¡Bot creado con éxito!');
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 2000);
-        })
-        .catch(error => {
-            showPopup('Error al crear el bot');
-            console.error('Error:', error);
+    async function saveBot(botData) {
+        const filename = `bots/${botData.name}.json`;
+        
+        // Subir imagen si existe
+        if (botData.photo) {
+            const imgData = await botData.photo.arrayBuffer();
+            const imgFilename = `bot-img/${Date.now()}-${botData.photo.name}`;
+            await uploadToGitHub(imgFilename, imgData);
+            botData.photo = '/' + imgFilename;
+        }
+
+        // Subir datos del bot
+        const content = JSON.stringify(botData, null, 2);
+        await uploadToGitHub(filename, content);
+    }
+
+    async function uploadToGitHub(path, content) {
+        const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`;
+        
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: `Add/Update ${path}`,
+                content: btoa(content),
+                branch: 'main'
+            })
         });
+        
+        if (!response.ok) {
+            throw new Error('Failed to upload to GitHub');
+        }
+    }
+
+    createButton.addEventListener('click', async () => {
+        const botData = {
+            name: nameInput.value,
+            photo: photoInput.files[0],
+            description: descriptionInput.value,
+            personality: personalityInput.value
+        };
+        
+        try {
+            await saveBot(botData);
+            window.location.href = 'index.html';
+        } catch (error) {
+            console.error('Error saving bot:', error);
+            alert('Error saving bot');
+        }
     });
 
     function showPopup(message) {

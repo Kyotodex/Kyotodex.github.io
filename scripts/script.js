@@ -3,13 +3,48 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.querySelector('.container-search input');
     const botsContainer = document.getElementById('bots-container');
 
-    // Cargar bots
-    fetch('/get-bots')
-        .then(response => response.json())
-        .then(bots => {
-            displayBots(bots);
-        })
-        .catch(error => console.error('Error:', error));
+    const GITHUB_TOKEN = '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';
+    const REPO_OWNER = 'Kyotodex';
+    const REPO_NAME = 'Kyotodex.github.io';
+
+    async function loadBots() {
+        const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/bots`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `token ${GITHUB_TOKEN}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load bots');
+        }
+
+        const files = await response.json();
+        const botsContainer = document.getElementById('bots-container');
+        
+        for (const file of files) {
+            if (file.name.endsWith('.json')) {
+                const botResponse = await fetch(file.download_url);
+                const botData = await botResponse.json();
+                
+                const botElement = document.createElement('div');
+                botElement.className = 'bot-card';
+                botElement.innerHTML = `
+                    <img src="${botData.photo}" alt="${botData.name}">
+                    <h3>${botData.name}</h3>
+                    <p>${botData.description}</p>
+                `;
+                
+                botsContainer.appendChild(botElement);
+            }
+        }
+    }
+
+    loadBots().catch(error => {
+        console.error('Error loading bots:', error);
+        alert('Error loading bots');
+    });
 
     // Búsqueda
     searchButton.addEventListener('click', function() {
