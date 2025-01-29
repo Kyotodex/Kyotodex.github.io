@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.querySelector('.container-search input');
     const botsContainer = document.getElementById('bots-container');
 
-    const GITHUB_TOKEN = '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';
+    const GITHUB_TOKEN = document.querySelector('meta[name="github-token"]').getAttribute('content');
     const REPO_OWNER = 'Kyotodex';
     const REPO_NAME = 'Kyotodex.github.io';
 
